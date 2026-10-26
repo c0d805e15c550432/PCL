@@ -1,0 +1,31 @@
+name: Build standard PCL-Union
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: microsoft/setup-msbuild@v3
+      - name: Configure local application identity
+        shell: pwsh
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CLIENT_ID)) { throw 'Configure the CLIENT_ID repository secret first.' }
+          New-Item -ItemType Directory -Path .local -Force | Out-Null
+          [IO.File]::WriteAllText((Join-Path $pwd '.local/client-id.txt'), $env:CLIENT_ID.Trim())
+      - name: Build standard variant
+        shell: pwsh
+        run: ./scripts/Build-PCL-Union.ps1
+      - uses: actions/upload-artifact@v7
+        with:
+          name: PCL-Union-standard
+          path: |
+            artifacts/standard/*.exe
+            artifacts/standard/*.config
+            artifacts/standard/LICENCE
