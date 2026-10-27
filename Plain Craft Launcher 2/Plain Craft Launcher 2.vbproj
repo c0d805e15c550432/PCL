@@ -1,4 +1,4 @@
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -968,9 +968,11 @@
     <PclClientIdFile Condition="'$(PclClientIdFile)' == ''">$(MSBuildProjectDirectory)\..\.local\client-id.txt</PclClientIdFile>
     <DefineConstants Condition="'$(EnableDownload)' == 'true'">$(DefineConstants),PCL_ENABLE_DOWNLOAD=True</DefineConstants>
     <DefineConstants Condition="'$(EnableTheme)' == 'true'">$(DefineConstants),PCL_ENABLE_THEME=True</DefineConstants>
+    <DefineConstants Condition="'$(EnableTHUnion)' == 'true'">$(DefineConstants),PCL_ENABLE_THUNION=True</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Pages\PageSetup\Settings.LoginMigration.vb" />
+    <Compile Include="Modules\Base\EmbeddedDependencies.vb" />
     <Reference Include="System.Security" />
   </ItemGroup>
   <ItemGroup Condition="Exists('$(PclClientIdFile)')">
@@ -981,5 +983,27 @@
   <Target Name="CheckLocalClientId" BeforeTargets="PrepareForBuild">
     <Error Condition="!Exists('$(PclClientIdFile)')" Text="缺少本地 .local/client-id.txt。请按 BUILD.md 配置自己的 Microsoft Client ID。" />
   </Target>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" GeneratePathProperty="true" />
+    <!-- WinRT composition requests Vectors dynamically; ship the version selected by App.config. -->
+    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" GeneratePathProperty="true" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.13.1" GeneratePathProperty="true" />
+    <Page Include="Pages\PageTHUnion\PageTHUnionLeft.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></Page>
+    <Compile Include="Pages\PageTHUnion\PageTHUnionLeft.xaml.vb"><DependentUpon>PageTHUnionLeft.xaml</DependentUpon><SubType>Code</SubType></Compile>
+    <Page Include="Pages\PageTHUnion\PageTHUnionData.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></Page>
+    <Compile Include="Pages\PageTHUnion\PageTHUnionData.xaml.vb"><DependentUpon>PageTHUnionData.xaml</DependentUpon><SubType>Code</SubType></Compile>
+    <Page Include="Pages\PageTHUnion\PageTHUnionWeb.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></Page>
+    <Compile Include="Pages\PageTHUnion\PageTHUnionWeb.xaml.vb"><DependentUpon>PageTHUnionWeb.xaml</DependentUpon><SubType>Code</SubType></Compile>
+  </ItemGroup>
+  <ItemGroup Condition="'$(EnableTHUnion)' == 'true'">
+    <EmbeddedResource Include="$(PkgMicrosoft_Web_WebView2)\lib\net462\Microsoft.Web.WebView2.Core.dll" LogicalName="PCL.Embedded.Microsoft.Web.WebView2.Core.dll" />
+    <EmbeddedResource Include="$(PkgMicrosoft_Web_WebView2)\lib\net462\Microsoft.Web.WebView2.Wpf.dll" LogicalName="PCL.Embedded.Microsoft.Web.WebView2.Wpf.dll" />
+    <EmbeddedResource Include="$(PkgSystem_Numerics_Vectors)\lib\net46\System.Numerics.Vectors.dll" LogicalName="PCL.Embedded.System.Numerics.Vectors.dll" />
+    <EmbeddedResource Include="$(PkgHtmlAgilityPack)\lib\Net45\HtmlAgilityPack.dll" LogicalName="PCL.Embedded.HtmlAgilityPack.dll" />
+    <EmbeddedResource Include="$(PkgMicrosoft_Web_WebView2)\runtimes\win-x86\native\WebView2Loader.dll" LogicalName="PCL.Embedded.win-x86.WebView2Loader.dll" />
+    <EmbeddedResource Include="$(PkgMicrosoft_Web_WebView2)\runtimes\win-x64\native\WebView2Loader.dll" LogicalName="PCL.Embedded.win-x64.WebView2Loader.dll" />
+    <EmbeddedResource Include="$(PkgMicrosoft_Web_WebView2)\runtimes\win-arm64\native\WebView2Loader.dll" LogicalName="PCL.Embedded.win-arm64.WebView2Loader.dll" />
+    <EmbeddedResource Include="..\licenses\THUnion\*.txt" LogicalName="PCL.Licenses.%(Filename)%(Extension)" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

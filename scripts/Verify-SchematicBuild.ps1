@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$SourceRoot = (Join-Path $PSScriptRoot '..'),
     [string]$Executable = '',
     [string]$OutputDirectory = '',
@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $SourceRoot = (Resolve-Path -LiteralPath $SourceRoot).Path
-if (-not $Executable) { $Executable = Join-Path $SourceRoot 'artifacts\standard\PCL-Union-2.99.T.0.exe' }
+if (-not $Executable) { $Executable = Join-Path $SourceRoot 'artifacts\standard\PCL-Union-2.99.T.1.exe' }
 $Executable = (Resolve-Path -LiteralPath $Executable).Path
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path $SourceRoot ('artifacts\checks-' + (Get-Date -Format 'yyyyMMdd-HHmmss')) }
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null

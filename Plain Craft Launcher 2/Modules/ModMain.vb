@@ -1,4 +1,4 @@
-Imports System.Collections.ObjectModel
+﻿Imports System.Collections.ObjectModel
 Imports System.Windows.Interop
 Imports System.Windows.Threading
 
@@ -386,6 +386,7 @@ EndHint:
     Public FrmDownloadResourcePack As PageDownloadResourcePack
 
     '设置页面声明
+    Public FrmTHUnionLeft As PageTHUnionLeft
     Public FrmSetupLeft As PageSetupLeft
     Public FrmSetupLaunch As PageSetupLaunch
     Public FrmSetupUI As PageSetupUI

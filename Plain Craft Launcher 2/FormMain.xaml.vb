@@ -1,4 +1,4 @@
-Imports System.ComponentModel
+﻿Imports System.ComponentModel
 Imports System.Windows.Interop
 
 Public Class FormMain
@@ -1230,6 +1230,7 @@ Public Class FormMain
         ''' 帮助详情。这是一个副页面。
         ''' </summary>
         HelpDetail = 9
+        THUnion = 10
     End Enum
     ''' <summary>
     ''' 次要页面种类。其数值必须与 StackPanel 中的下标一致。
@@ -1258,6 +1259,14 @@ Public Class FormMain
         InstanceModDisabled = 4
         InstanceExport = 5
         InstanceSchematic = 6
+        THUnionOnline = 0
+        THUnionMap = 1
+        THUnionIndustry = 2
+        THUnionWiki = 3
+        THUnionServers = 4
+        THUnionSecond = 5
+        THUnionFirst = 6
+        THUnionRules = 7
     End Enum
     ''' <summary>
     ''' 获取次级页面的名称。若并非次级页面则返回空字符串，故可以以此判断是否为次级页面。
@@ -1309,6 +1318,9 @@ Public Class FormMain
                 Case PageType.Download
                     If FrmDownloadLeft Is Nothing Then FrmDownloadLeft = New PageDownloadLeft
                     Return FrmDownloadLeft.PageID
+                Case PageType.THUnion
+                    If FrmTHUnionLeft Is Nothing Then FrmTHUnionLeft = New PageTHUnionLeft
+                    Return FrmTHUnionLeft.PageID
                 Case PageType.Setup
                     If FrmSetupLeft Is Nothing Then FrmSetupLeft = New PageSetupLeft
                     Return FrmSetupLeft.PageID
@@ -1370,16 +1382,25 @@ Public Class FormMain
     ''' 切换页面，并引起对应选择 UI 的改变。
     ''' </summary>
     Public Sub PageChange(Stack As PageStackData, Optional SubType As PageSubType = PageSubType.Default)
+        If Stack.Page = PageType.THUnion AndAlso Not EnableTHUnion Then Return
+        If Stack.Page = PageType.THUnion AndAlso PageCurrent = PageType.THUnion AndAlso FrmTHUnionLeft IsNot Nothing Then
+            FrmTHUnionLeft.PageChange(SubType)
+            Return
+        End If
         If PageNameGet(Stack) = "" Then
             '切换到主页面
             PageChangeExit()
             IsChangingPage = True '防止下面的勾选直接触发了 PageChangeActual
-            CType(PanTitleSelect.Children(Stack), MyRadioButton).SetChecked(True, True, PageNameGet(PageCurrent) = "")
+            '按 Tag 查找，保持既有 PageType 数值与自定义事件 API 兼容。
+            PanTitleSelect.Children.OfType(Of MyRadioButton)().First(Function(button) Val(button.Tag) = CInt(Stack.Page)).SetChecked(True, True, PageNameGet(PageCurrent) = "")
             IsChangingPage = False
             Select Case Stack.Page
                 Case PageType.Download
                     If FrmDownloadLeft Is Nothing Then FrmDownloadLeft = New PageDownloadLeft
                     CType(FrmDownloadLeft.PanItem.Children(SubType), MyListItem).SetChecked(True, True, Stack = PageCurrent)
+                Case PageType.THUnion
+                    If FrmTHUnionLeft Is Nothing Then FrmTHUnionLeft = New PageTHUnionLeft
+                    FrmTHUnionLeft.SelectItem(SubType)
                 Case PageType.Setup
                     If FrmSetupLeft Is Nothing Then FrmSetupLeft = New PageSetupLeft
                     CType(FrmSetupLeft.PanItem.Children(SubType), MyListItem).SetChecked(True, True, Stack = PageCurrent)
@@ -1401,7 +1422,7 @@ Public Class FormMain
     ''' <summary>
     ''' 通过点击导航栏改变页面。
     ''' </summary>
-    Private Sub BtnTitleSelect_Click(sender As MyRadioButton, raiseByMouse As Boolean) Handles BtnTitleSelect0.Check, BtnTitleSelect1.Check, BtnTitleSelect2.Check, BtnTitleSelect3.Check, BtnTitleSelect4.Check
+    Private Sub BtnTitleSelect_Click(sender As MyRadioButton, raiseByMouse As Boolean) Handles BtnTitleSelect0.Check, BtnTitleSelect1.Check, BtnTitleSelect2.Check, BtnTitleSelect3.Check, BtnTitleSelect4.Check, BtnTitleTHUnion.Check
         If IsChangingPage Then Return
         PageChangeActual(Val(sender.Tag))
     End Sub
@@ -1421,6 +1442,7 @@ Public Class FormMain
     ''' 切换现有页面的实际方法。
     ''' </summary>
     Private Sub PageChangeActual(Stack As PageStackData, Optional SubType As PageSubType = -1)
+        If Stack.Page = PageType.THUnion AndAlso Not EnableTHUnion Then Return
         If PageCurrent = Stack AndAlso (PageCurrentSub = SubType OrElse SubType = -1) Then Return
         If Stack.Page = PageType.InstanceSetup AndAlso PageInstanceLeft.Instance IsNot Nothing AndAlso McInstanceLock.IsLocked(PageInstanceLeft.Instance) Then
             Hint("该版本正在被修改，暂时无法进入版本设置！", HintType.Red)
@@ -1480,6 +1502,9 @@ Public Class FormMain
                     If FrmDownloadLeft Is Nothing Then FrmDownloadLeft = New PageDownloadLeft
                     'PageGet 方法会在未设置 SubType 时指定默认值，并建立相关页面的实例
                     PageChangeAnim(FrmDownloadLeft, FrmDownloadLeft.PageGet(SubType))
+                Case PageType.THUnion
+                    If FrmTHUnionLeft Is Nothing Then FrmTHUnionLeft = New PageTHUnionLeft
+                    PageChangeAnim(FrmTHUnionLeft, FrmTHUnionLeft.PageGet(SubType))
                 Case PageType.Link '联机
                     If FrmLinkMain Is Nothing Then FrmLinkMain = New PageLinkMain
                     PageChangeAnim(New MyPageLeft, FrmLinkMain)

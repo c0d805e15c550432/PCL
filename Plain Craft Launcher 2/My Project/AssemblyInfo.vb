@@ -1,4 +1,4 @@
-Imports System.Reflection
+﻿Imports System.Reflection
 Imports System.Resources
 Imports System.Runtime.InteropServices
 
@@ -51,7 +51,7 @@ Imports System.Runtime.InteropServices
 ' 可以指定所有值，也可以使用以下所示的 "*" 预置版本号和修订号
 ' 方法是按如下所示使用“*”
 
-<Assembly: AssemblyVersion("2.99.0.1")>
-<Assembly: AssemblyFileVersion("2.99.0.1")>
-<Assembly: AssemblyInformationalVersion("2.99.T.0")>
+<Assembly: AssemblyVersion("2.99.0.2")>
+<Assembly: AssemblyFileVersion("2.99.0.2")>
+<Assembly: AssemblyInformationalVersion("2.99.T.1")>
 <Assembly: NeutralResourcesLanguage("")>

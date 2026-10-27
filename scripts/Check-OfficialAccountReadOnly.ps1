@@ -1,4 +1,4 @@
-param([string]$OutputFile = '')
+﻿param([string]$OutputFile = '')
 $ErrorActionPreference = 'Stop'
 # No token, username, device identity or ciphertext is returned or saved.
 Add-Type -TypeDefinition @'

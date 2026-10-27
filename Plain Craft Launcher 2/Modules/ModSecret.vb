@@ -1,4 +1,4 @@
-'由于包含加解密等安全信息，本文件中的部分代码已被删除
+﻿'由于包含加解密等安全信息，本文件中的部分代码已被删除
 
 Friend Module ModSecret
 
@@ -36,6 +36,11 @@ Friend Module ModSecret
     Public Const EnableThemeCustomization As Boolean = True
 #Else
     Public Const EnableThemeCustomization As Boolean = False
+#End If
+#If PCL_ENABLE_THUNION Then
+    Public Const EnableTHUnion As Boolean = True
+#Else
+    Public Const EnableTHUnion As Boolean = False
 #End If
     Friend Function SecretCdnSign(UrlWithMark As String) As String
         If Not UrlWithMark.EndsWithF("{CDN}") Then Return UrlWithMark

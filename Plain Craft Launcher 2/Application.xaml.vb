@@ -194,25 +194,22 @@ RetryCacheCheck:
         e.Handled = True
         If IsProgramEnding Then Return
         FeedbackInfo()
-        Dim Detail As String = e.Exception.GetDisplay(True)
-        If Detail.Contains("System.Windows.Threading.Dispatcher.Invoke") OrElse Detail.Contains("MS.Internal.AppModel.ITaskbarList.HrInit") OrElse Detail.Contains("未能加载文件或程序集") OrElse
-           Detail.Contains(".NET Framework") Then ' “自动错误判断” 的结果分析
-            OldEnvironmentAssert(e.Exception)
-        Else
-            Logger.Error(e.Exception, "程序出现未知错误", LogBehavior.AlertThenCrash)
-        End If
+        '缺失 NuGet DLL、程序集重定向错误和 Dispatcher 堆栈均不能证明系统框架过旧。
+        '仅启动时读取到确切的 Framework Release 过低才引导安装，运行异常不自动打开下载页。
+        Logger.Error(e.Exception, "程序运行失败，请查看下方具体错误。若提示无法加载内置程序集，请重新获取完整的启动器 EXE。", LogBehavior.AlertThenCrash)
     End Sub
     Private Shared Sub OldEnvironmentAssert(Optional ex As Exception = Nothing)
         OpenWebsite("https://dotnet.microsoft.com/zh-cn/download/dotnet-framework/thank-you/net48-offline-installer")
         If ex Is Nothing Then
-            Logger.Error($"你的 .NET Framework 版本过低或损坏，请下载并重新安装 .NET Framework 4.8！{vbCrLf}若安装失败，可以先卸载高版本的 .NET Framework 然后再试。", LogBehavior.AlertThenCrash)
+            Logger.Error("检测到 .NET Framework 版本低于 4.8，请安装 .NET Framework 4.8 或更高版本。", LogBehavior.AlertThenCrash)
         Else
-            Logger.Error(ex, $"你的 .NET Framework 版本过低或损坏，请下载并重新安装 .NET Framework 4.8！{vbCrLf}若安装失败，可以先卸载高版本的 .NET Framework 然后再试。", LogBehavior.AlertThenCrash)
+            Logger.Error(ex, "检测到 .NET Framework 版本低于 4.8，请安装 .NET Framework 4.8 或更高版本。", LogBehavior.AlertThenCrash)
         End If
     End Sub
 
     '动态 DLL 加载
     Private Sub New() '这里必须尽早调用，且不能使用任何库，否则加载 MeloongCore 就会导致崩溃
+        AddHandler AppDomain.CurrentDomain.AssemblyResolve, AddressOf EmbeddedDependencies.Resolve
         Static Prefixes As String() = {"NAudio", "Newtonsoft.Json", "Ookii.Dialogs.Wpf", "Imazen.WebP", "CacheCow.Common", "CacheCow.Client.FileStore", "CacheCow.Client", "ThrottleDebounce", "System.Net.Http.Formatting", "Microsoft.Win32.Registry", "PCLCS", "MeloongCore.Wpf", "MeloongCore"}
         Static LoadedAssemblies As New ConcurrentDictionary(Of String, Lazy(Of Assembly))(StringComparer.Ordinal) '缓存
         AddHandler AppDomain.CurrentDomain.AssemblyResolve,

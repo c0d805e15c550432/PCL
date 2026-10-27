@@ -349,3 +349,10 @@ MaskFiles/
 # Machine-local build identity; never publish this directory.
 /.local/
 /最新正式版/
+
+# Historical upstream patches and local identity / runtime data
+/patches/
+.env
+.env.*
+*.har
+*.dmp

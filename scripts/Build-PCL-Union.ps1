@@ -1,9 +1,10 @@
-param(
+﻿param(
     [string]$SourceRoot = (Join-Path $PSScriptRoot '..'),
     [string]$OutputDirectory = '',
     [string]$MSBuild = '',
     [switch]$EnableDownload,
-    [switch]$EnableTheme
+    [switch]$EnableTheme,
+    [switch]$EnableTHUnion
 )
 
 $ErrorActionPreference = 'Stop'
@@ -25,16 +26,27 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $OutputDirectory = (Resolve-Path -LiteralPath $OutputDirectory).Path
 $restoreLog = Join-Path $OutputDirectory 'restore.log'
 $buildLog = Join-Path $OutputDirectory 'build-release.log'
-& $MSBuild (Join-Path $SourceRoot 'PCLCS\PCLCS.csproj') /t:Restore /p:Configuration=Release /nologo /v:minimal /fl "/flp:logfile=$restoreLog;verbosity=normal;encoding=UTF-8"
+& $MSBuild (Join-Path $SourceRoot 'Plain Craft Launcher 2\Plain Craft Launcher 2.vbproj') /t:Restore /p:Configuration=Release /nologo /v:minimal /fl "/flp:logfile=$restoreLog;verbosity=normal;encoding=UTF-8"
 if ($LASTEXITCODE -ne 0) { throw "NuGet 还原失败：$restoreLog" }
 $downloadValue = $EnableDownload.IsPresent.ToString().ToLowerInvariant()
 $themeValue = $EnableTheme.IsPresent.ToString().ToLowerInvariant()
-& $MSBuild (Join-Path $SourceRoot 'Plain Craft Launcher 2\Plain Craft Launcher 2.vbproj') /p:Configuration=Release "/p:EnableDownload=$downloadValue" "/p:EnableTheme=$themeValue" /nologo /v:minimal /fl "/flp:logfile=$buildLog;verbosity=normal;encoding=UTF-8"
+$unionValue = $EnableTHUnion.IsPresent.ToString().ToLowerInvariant()
+& $MSBuild (Join-Path $SourceRoot 'Plain Craft Launcher 2\Plain Craft Launcher 2.vbproj') /p:Configuration=Release "/p:EnableDownload=$downloadValue" "/p:EnableTheme=$themeValue" "/p:EnableTHUnion=$unionValue" /nologo /v:minimal /fl "/flp:logfile=$buildLog;verbosity=normal;encoding=UTF-8"
 if ($LASTEXITCODE -ne 0) { throw "构建失败：$buildLog" }
-$executable = Join-Path $OutputDirectory 'PCL-Union-2.99.T.0.exe'
+$executable = Join-Path $OutputDirectory 'PCL-Union-2.99.T.1.exe'
 Copy-Item -LiteralPath (Join-Path $SourceRoot 'Plain Craft Launcher 2\bin\Plain Craft Launcher 2.exe') -Destination $executable -Force
-Copy-Item -LiteralPath (Join-Path $SourceRoot 'Plain Craft Launcher 2\App.config') -Destination "$executable.config" -Force
 Copy-Item -LiteralPath (Join-Path $SourceRoot 'LICENCE') -Destination (Join-Path $OutputDirectory 'LICENCE') -Force
-@{ version = '2.99.T.0'; downloads = $EnableDownload.IsPresent; themes = $EnableTheme.IsPresent; sha256 = (Get-FileHash -LiteralPath $executable).Hash } |
-    ConvertTo-Json | Set-Content -LiteralPath (Join-Path $OutputDirectory 'build-manifest.json') -Encoding utf8
+Copy-Item -LiteralPath (Join-Path $SourceRoot 'THUNION.md') -Destination (Join-Path $OutputDirectory 'THUNION.md') -Force
+# THUnion dependencies, native loaders and license texts are embedded in the EXE.
+# Keep optional readable notices beside the release; no DLL or .config is required.
+if ($EnableTHUnion) {
+    $licenseOutput = Join-Path $OutputDirectory 'third-party-licenses'
+    New-Item -ItemType Directory -Path $licenseOutput -Force | Out-Null
+    Get-ChildItem -LiteralPath (Join-Path $SourceRoot 'licenses\THUnion') -File | ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $licenseOutput $_.Name) -Force
+    }
+}
+$files = @(@{ path = [IO.Path]::GetFileName($executable); sha256 = (Get-FileHash -LiteralPath $executable).Hash })
+@{ version = '2.99.T.1'; singleFile = $true; downloads = $EnableDownload.IsPresent; themes = $EnableTheme.IsPresent; thunion = $EnableTHUnion.IsPresent; sha256 = (Get-FileHash -LiteralPath $executable).Hash; files = $files } |
+    ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'build-manifest.json') -Encoding utf8
 Get-FileHash -LiteralPath $executable -Algorithm SHA256
